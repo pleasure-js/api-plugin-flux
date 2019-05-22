@@ -2,7 +2,8 @@
   "name": "pleasure-api-plugin-flux",
   "version": "1.0.0-beta",
   "description": "pleasure rollup bundler boilerplate",
-  "main": "index.js",
+  "main": "dist/pleasure-api-plugin-flux.js",
+  "module": "dist/pleasure-api-plugin-flux.esm.js",
   "author": "Martin Rafael Gonzalez <tin@devtin.io>",
   "license": "MIT",
   "scripts": {
