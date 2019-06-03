@@ -199,7 +199,7 @@ export default {
     }
   },
   name: 'flux',
-  init ({ pleasureEntityMap, pluginsApi, config }) {
+  prepare ({ pleasureEntityMap, pluginsApi, config }) {
     fluxConfig = config
     PleasureEntityMap = pleasureEntityMap
     io = pluginsApi.io.socketIo()

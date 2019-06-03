@@ -206,7 +206,7 @@ var pleasureApiPluginFlux = {
     }
   },
   name: 'flux',
-  init ({ pleasureEntityMap, pluginsApi, config }) {
+  prepare ({ pleasureEntityMap, pluginsApi, config }) {
     PleasureEntityMap = pleasureEntityMap;
     io = pluginsApi.io.socketIo();
     getUserGroups = pluginsApi.io.getUserGroups;
