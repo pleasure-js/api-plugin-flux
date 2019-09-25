@@ -10,10 +10,13 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var castArray = _interopDefault(require('lodash/castArray'));
 var forOwn = _interopDefault(require('lodash/forOwn'));
 var defaultsDeep = _interopDefault(require('lodash/defaultsDeep'));
+var pleasureUtils = require('pleasure-utils');
+var deepObjectDiff = require('deep-object-diff');
+
+const { debug } = pleasureUtils.getConfig();
 
 let io;
 let PleasureEntityMap;
-
 let getUserGroups;
 
 /**
@@ -23,29 +26,39 @@ let getUserGroups;
  * default to `(auth) => { auth.level  || 'global' }`
  * @property {Object} payload - Holds all of the payload hooks
  * @property {Function} payload.create - Hook
+ * @property {Function} payload.update - Hook
+ * @property {Function} payload.delete - Hook
  */
 
-function fluxDelivery (entityName, method, entry) {
-  if (!method || (entry && entry.$noFLux)) {
+/**
+ *
+ * @param {String} entityName
+ * @param {String} method
+ * @param {Object} payload - Submitted for approval
+ * @param {Object} [legacy] - Payload that will be merged with approved one to be send.
+ */
+function fluxDelivery (entityName, method, payload, legacy) {
+  if (!method || (!payload && !legacy)) {
     return
   }
 
   if (!PleasureEntityMap) {
+    debug && console.log(`trying to emit flux with no API initialized`);
     return
   }
 
-  let deliveryGroup = PleasureEntityMap[entityName].flux.access[method]({ entry });
+  let deliveryGroup = PleasureEntityMap[entityName].flux.access[method](payload);
 
   const getDeliveryPayload = group => {
-    let payload = PleasureEntityMap[entityName].flux.payload[method]({ group, entry });
+    let deliveryPayload = PleasureEntityMap[entityName].flux.payload[method](Object.assign({ group }, payload));
 
-    if (!payload) {
+    if (!deliveryPayload) {
       return
     }
 
-    payload = Array.isArray(payload) || !(typeof payload === 'object' && 'toObject' in payload) ? payload : payload.toObject();
+    deliveryPayload = Array.isArray(deliveryPayload) || !(typeof deliveryPayload === 'object' && 'toObject' in deliveryPayload) ? deliveryPayload : deliveryPayload.toObject();
 
-    return [method, { entry: payload, entity: entityName }]
+    return [method, Object.assign({ entry: deliveryPayload, entity: entityName }, legacy || {})]
   };
 
   if (!deliveryGroup) {
@@ -53,13 +66,36 @@ function fluxDelivery (entityName, method, entry) {
   }
 
   if (typeof deliveryGroup === 'boolean') {
-    deliveryGroup = getUserGroups();
+    deliveryGroup = '$global';
+  }
+
+  if (debug) {
+    io.in('$global').clients((err, clients) => {
+      if (err) {
+        return console.log(`error getting clients in $global`, err)
+      }
+      console.log(`${ clients.length } in $global`, clients);
+    });
   }
 
   castArray(deliveryGroup).forEach(group => {
     const payload = getDeliveryPayload(group);
     if (payload) {
-      io.to(group).emit(...payload);
+      try {
+        io.to(group).emit(...payload);
+        debug && console.log(`deliver ${ method } > ${ group }`, { payload });
+        // .map(s => s.id)
+        /*
+                io.in(group).clients((err, clients) => {
+                  if (err) {
+                    debug && console.log(`error getting clients in ${ group }`, err)
+                  }
+                  debug && console.log(`${ clients.length } in ${ group }`, clients)
+                })
+        */
+      } catch (err) {
+        debug && console.log(`Error delivering flux`, err);
+      }
     }
   });
 }
@@ -220,23 +256,49 @@ var pleasureApiPluginFlux = {
       entry.$before = entry.toObject();
     });
 
+    const entryDelivery = (method, entry, legacy) => {
+      if (entry && entry.$noFLux) {
+        return
+      }
+
+      console.log({ legacy });
+      return fluxDelivery(entityName, method, { entry }, legacy)
+    };
+
     mongooseSchema.post('save', function (entry) {
       entry.$after = entry.toObject();
-      const method = entry.wasNew ? 'create' : 'update';
-      fluxDelivery(entityName, method, entry);
+      const method = entry.wasNew && !entry._fluxWasNew ? 'create' : 'update';
+      const legacy = {};
+      if (entry.wasNew) {
+        entry._fluxWasNew = true;
+      } else {
+        Object.assign(legacy, { modified: deepObjectDiff.updatedDiff(entry.$before, entry.$after), id: entry._id });
+      }
+      entryDelivery(method, entry, legacy);
+      // entry.wasNew = false // reset was new
     });
 
-    mongooseSchema.post('remove', { query: true, document: true }, fluxDelivery.bind(null, entityName, 'delete'));
+    mongooseSchema.post('remove', {
+      query: true,
+      document: true
+    }, entry => {
+      entryDelivery('delete', entry, { id: entry._id });
+    });
 
     mongooseSchema.post('deleteMany', {
       query: true,
       document: true
-    }, fluxDelivery.bind(null, entityName, 'deleteMany'));
+    }, (entries) => {
+      console.log({ entries });
+      entryDelivery('deleteMany', entries/*, { ids: entries.map(({ _id }) => _id) }*/);
+    });
 
     mongooseSchema.post('updateMany', {
       query: true,
       document: true
-    }, fluxDelivery.bind(null, entityName, 'updateMany'));
+    }, (entries) => {
+      entryDelivery('updateMany', entries/*, { ids: entries.map(({ _id }) => _id) }*/);
+    });
   },
   methods: {
     fluxDelivery
