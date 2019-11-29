@@ -74,7 +74,6 @@ function fluxDelivery (entityName, method, payload, legacy) {
       if (err) {
         return console.log(`error getting clients in $global`, err)
       }
-      console.log(`${ clients.length } in $global`, clients);
     });
   }
 
@@ -261,7 +260,7 @@ var pleasureApiPluginFlux = {
         return
       }
 
-      console.log({ legacy });
+      // console.log({ legacy })
       return fluxDelivery(entityName, method, { entry }, legacy)
     };
 
@@ -289,7 +288,7 @@ var pleasureApiPluginFlux = {
       query: true,
       document: true
     }, (entries) => {
-      console.log({ entries });
+      // console.log({ entries })
       entryDelivery('deleteMany', entries/*, { ids: entries.map(({ _id }) => _id) }*/);
     });
 
