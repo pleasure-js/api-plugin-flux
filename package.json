@@ -22,7 +22,7 @@
     "rollup-plugin-node-resolve": "^5.0.0"
   },
   "dependencies": {
-    "@pleasure-js/utils": "git@github.com:pleasure-js/utils.git#v1-beta",
+    "@pleasure-js/utils": "git+ssh://git@github.com:pleasure-js/utils.git#v1-beta",
     "deep-object-diff": "^1.1.0",
     "lodash": "^4.17.11"
   }
