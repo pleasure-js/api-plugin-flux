@@ -1,15 +1,19 @@
 /*!
- * pleasure-api-plugin-flux v1.0.0-beta
- * (c) 2018-2019 Martin Rafael Gonzalez <tin@devtin.io>
+ * @pleasure-js/api-plugin-flux v1.0.0-beta
+ * (c) 2018-2020 Martin Rafael Gonzalez <tin@devtin.io>
  * Released under the MIT License.
  */
-import castArray from 'lodash/castArray';
-import forOwn from 'lodash/forOwn';
-import defaultsDeep from 'lodash/defaultsDeep';
-import { getConfig } from 'pleasure-utils';
-import { updatedDiff } from 'deep-object-diff';
+'use strict';
 
-const { debug } = getConfig();
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var castArray = _interopDefault(require('lodash/castArray'));
+var forOwn = _interopDefault(require('lodash/forOwn'));
+var defaultsDeep = _interopDefault(require('lodash/defaultsDeep'));
+var utils = require('@pleasure-js/utils');
+var deepObjectDiff = require('deep-object-diff');
+
+const { debug } = utils.getConfig();
 
 let io;
 let PleasureEntityMap;
@@ -95,7 +99,7 @@ function fluxDelivery (entityName, method, payload, legacy) {
   });
 }
 
-var pleasureApiPluginFlux = {
+var apiPluginFlux = {
   config: {
     access: {
       /**
@@ -267,7 +271,7 @@ var pleasureApiPluginFlux = {
       if (entry.wasNew) {
         entry._fluxWasNew = true;
       } else {
-        Object.assign(legacy, { modified: updatedDiff(entry.$before, entry.$after), id: entry._id });
+        Object.assign(legacy, { modified: deepObjectDiff.updatedDiff(entry.$before, entry.$after), id: entry._id });
       }
       entryDelivery(method, entry, legacy);
       // entry.wasNew = false // reset was new
@@ -300,4 +304,4 @@ var pleasureApiPluginFlux = {
   }
 };
 
-export default pleasureApiPluginFlux;
+module.exports = apiPluginFlux;

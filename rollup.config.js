@@ -2,8 +2,6 @@ import path from 'path'
 import commonjs from 'rollup-plugin-commonjs'
 import json from 'rollup-plugin-json'
 import alias from 'rollup-plugin-alias'
-// import resolve from 'rollup-plugin-node-resolve'
-import minify from 'minify'
 import { name, version, author } from './package.json'
 
 const fromSrc = (...paths) => {
@@ -27,7 +25,7 @@ const plugins = [
   }),
 /*
   resolve({
-    only: [/pleasure-/]
+    only: [//]
   }),
 */
  // minify()
@@ -41,15 +39,15 @@ const banner = `/*!
 
 export default [
   {
-    input: 'src/pleasure-api-plugin-flux.js',
+    input: 'src/api-plugin-flux.js',
     output: [
       {
-        file: 'dist/pleasure-api-plugin-flux.js',
+        file: 'dist/api-plugin-flux.js',
         format: 'cjs',
         banner
       },
       {
-        file: 'dist/pleasure-api-plugin-flux.esm.js',
+        file: 'dist/api-plugin-flux.esm.js',
         format: 'esm',
         banner
       }

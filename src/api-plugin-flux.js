@@ -1,7 +1,7 @@
 import castArray from 'lodash/castArray'
 import forOwn from 'lodash/forOwn'
 import defaultsDeep from 'lodash/defaultsDeep'
-import { getConfig as getLocalConfig } from 'pleasure-utils'
+import { getConfig as getLocalConfig } from '@pleasure-js/utils'
 import { updatedDiff } from 'deep-object-diff'
 
 const { debug } = getLocalConfig()
